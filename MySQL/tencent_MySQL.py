@@ -7,7 +7,7 @@
 
 """
 
-from SQL.MySQL import MyMySqlAPI
+from MySQL import MyMySqlAPI
 
 
 class TencentMySQL(MyMySqlAPI):

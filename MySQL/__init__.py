@@ -45,7 +45,7 @@ from .mysql import MyMySqlAPI, TencentMySQL, LocalhostMySQL
 class Test(MyMySqlAPI):
     """测试的mysql对象封装"""
 
-    def __init__(self, host='t.sql.leecq.xyz', port=10080,
+    def __init__(self, host='localhost', port=3306,
                  user='test', passwd='test123456', db='test', charset='gb18030',
                  **kwargs):
         super().__init__(host, port, user, passwd, db, charset, **kwargs)

@@ -13,7 +13,7 @@ import time
 import os
 import _md5
 
-from tencent_MySQL import TencentMySQL
+from . import TencentMySQL
 
 
 class UploadPhoto:

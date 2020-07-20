@@ -25,5 +25,6 @@ class MyMySqlWriteError(MyMySqlError):
 
 
 class MyMySqlInsertZipError(MyMySqlError):
+    """"""
     pass
 

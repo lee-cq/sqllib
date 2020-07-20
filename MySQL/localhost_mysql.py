@@ -5,11 +5,12 @@
 @Author     : LeeCQ
 @Date-Time  : 2019/12/6 18:40
 
+本地SQL测试文件
 """
 
-import pymysql
-from SQL.MySQL import MyMySqlAPI
-from DBUtils.PooledDB import PooledDB
+
+from MySQL import MyMySqlAPI
+# from DBUtils.PooledDB import PooledDB
 
 
 class LocalhostMySQL(MyMySqlAPI):

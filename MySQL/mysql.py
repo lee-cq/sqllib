@@ -36,26 +36,26 @@
 
     *v4: - 2020/02/29
         1. 修改show_columns() - 表名前缀问题 <-  ok
+        2. 修改show_table -> show_tables                     --ok  2020/07/20
+        3. 修改show_tables逻辑 str(_c[0]) -> _c[0].decode()   -- ok 2020/07/20
 
 """
+
 import logging
 import sys
+import pymysql
+from sql_error import *
+from SQLCommon import sql_join
+from DBUtils.PooledDB import PooledDB
+from warnings import filterwarnings
+
 
 logger = logging.getLogger("MySQL")  # 创建实例
 formatter = logging.Formatter("[%(asctime)s] < %(funcName)s: %(lineno)d > [%(levelname)s] %(message)s")
 # 终端日志
-consle_handler = logging.StreamHandler(sys.stdout)
-consle_handler.setFormatter(formatter)  # 日志文件的格式
+terminal_handler = logging.StreamHandler(sys.stdout)
+terminal_handler.setFormatter(formatter)  # 日志文件的格式
 logger.setLevel(logging.DEBUG)  # 设置日志文件等级
-
-import sys
-from warnings import filterwarnings
-
-import pymysql
-from DBUtils.PooledDB import PooledDB
-
-from .sql_error import *
-from ..SQLCommon import sql_join
 
 __all__ = ['MyMySqlAPI', 'TencentMySQL', 'LocalhostMySQL']
 
@@ -185,7 +185,7 @@ class MyMySQL:
             _c = cur.execute(command, args)
             __sql.commit()  # 提交数据库
             return _c
-        except:
+        except Exception:
             __sql.rollback()
             sys.exc_info()
             raise MyMySqlWriteError(f'操作数据库时出现问题，数据库已回滚至操作前——\n{sys.exc_info()}')
@@ -205,7 +205,7 @@ class MyMySQL:
                 _c = cur.executemany(command, args)
                 __sql.commit()
             return _c
-        except:
+        except Exception:
             __sql.rollback()
             sys.exc_info()
             raise MyMySqlWriteError("__write_rows() 操作数据库出错，已回滚 \n" + str(sys.exc_info()))
@@ -253,7 +253,7 @@ class MyMySQL:
     # 获取数据库的表名
     def __tables_name(self) -> list:
         """由于链接时已经指定数据库，无需再次指定。返回数据库中所有表的名字。"""
-        return [str(_c[0]) for _c in self.__read_db("show tables")]
+        return [_c[0].decode() for _c in self.__read_db("show tables")]
 
     # 判断表、键值的存在性
     def __key_and_table_is_exists(self, table, key, *args, **kwargs):
@@ -340,7 +340,8 @@ class MyMySQL:
         """
         _a = [_.values() for _ in args]
         if k is None:
-            if not isinstance(args[0], dict): raise ValueError(f'既没有k, 也不是dict')
+            if not isinstance(args[0], dict):
+                raise ValueError(f'既没有k, 也不是dict')
             k = args[0].keys()
         _ignore = 'OR IGNORE' if ignore_repeat else ''
         _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
@@ -387,7 +388,7 @@ class MyMySQL:
         _update_data = ' , '.join([f" `{k}`=%({k})s  " for k, v in kwargs.items()])  # 构造更新内容
         command = (f"UPDATE `{self.TABLE_PREFIX}{table}` SET  "
                    f"{_update_data}"
-                   f" WHERE `{where_key}`='{where_value}' ;"    # 构造WHERE语句
+                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句
                    )
         return self.__write_db(command, kwargs)  # 执行SQL语句
 
@@ -449,7 +450,7 @@ class MyMySQL:
         """读取数据库的外部访问"""
         return self.__read_db(command, args, result_type)
 
-    def show_table(self):
+    def show_tables(self):
         """列出当前数据库的数据表"""
         return self.__tables_name()
 
@@ -658,7 +659,7 @@ class MyMySqlAPI(MyMySQL):
         """
         return self._drop('TABLE', name)
 
-    def drop_DB(self, name):
+    def drop_db(self, name):
         """用来删除一个数据库
 
         :param name:
@@ -722,8 +723,4 @@ class LocalhostMySQL(MyMySqlAPI):
 
 
 if __name__ == '__main__':
-    logger.addHandler(consle_handler)  # 添加控制台
-
-    # a = MyMySQL('t.sql.leecq.xyz', 10080, 'test', 'test123456', 'test', 'utf8', use_unicode=False)
-    a = TencentMySQL('test', 'test123456', 'test', use_unicode=False)
-    print(a.select('test', '*', result_type=dict))
+    logger.addHandler(terminal_handler)  # 添加控制台
