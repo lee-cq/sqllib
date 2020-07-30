@@ -19,7 +19,7 @@ AUTHOR_EMAIL = "lee-cq@qq.com"
 TOPDIR = os.path.dirname(__file__) or "."
 VERSION = __import__(PACKAGE).__version__
 
-with open("requirements.txt") as fp:
+with open("readme.md", encoding='utf8') as fp:
     LONG_DESCRIPTION = fp.read()
 
 

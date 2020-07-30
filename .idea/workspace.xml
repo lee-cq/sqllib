@@ -26,40 +26,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3750673e-a760-4690-92c5-dc0bd7d1473c" name="Default Changelist" comment="2020.7.20: {mysql.py:show_table-&gt;show_tables|str(_c[0]) -&gt; _c[0].decode(), deleteFile: MySQL\history\}">
-      <change afterPath="$PROJECT_DIR$/description.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/sqllib/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/sqllib/test/mysql-test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BDB/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/BDB/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BDB/bsddb3-6.2.6-cp37-cp37m-win_amd64.whl" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/BDB/bsddb3-6.2.6-cp37-cp37m-win_amd64.whl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ConnectionPool.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/ConnectionPool.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LiteDB/LiteDB.Studio.exe" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/LiteDB/LiteDB.Studio.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LiteDB/LiteDB.dll" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/LiteDB/LiteDB.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LiteDB/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/LiteDB/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/LiteDB/v1.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/LiteDB/v1.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MangoDB/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MangoDB/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MangoDB/test_1.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MangoDB/test_1.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/01_创建表.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/02_查询.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MySQL/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/localhost_mysql.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MySQL/localhost_mysql.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/mysql.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MySQL/mysql.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/sql_error.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/MySQL/sql_error.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/tencent_MySQL.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/upload_photo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MySQL/写字节对象-BLOB.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLCommon.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLCommon.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/sqlite.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/sqlite.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/sup/Bookmarks" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/sup/Bookmarks" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/sup/QQWry.DAT" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/sup/QQWry.DAT" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/sup/test.db" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/sup/test.db" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SQLite/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/SQLite/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/sqllib/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/description.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -240,6 +208,7 @@
       <workItem from="1594962705744" duration="56000" />
       <workItem from="1595242005470" duration="2909000" />
       <workItem from="1596086482663" duration="6429000" />
+      <workItem from="1596094594136" duration="255000" />
     </task>
     <task id="LOCAL-00001" summary="2020.7.20: {mysql.py:show_table-&gt;show_tables|str(_c[0]) -&gt; _c[0].decode(), deleteFile: MySQL\history\}">
       <created>1595244190262</created>
@@ -339,7 +308,7 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/python_sql$mysql.coverage" NAME="mysql Coverage Results" MODIFIED="1595242834004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/MySQL" />
     <SUITE FILE_PATH="coverage/python_sql$_BLOB.coverage" NAME="写字节对象-BLOB Coverage Results" MODIFIED="1594723065307" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/MySQL" />
-    <SUITE FILE_PATH="coverage/python_sql$setup.coverage" NAME="setup Coverage Results" MODIFIED="1596093612705" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/python_sql$setup.coverage" NAME="setup Coverage Results" MODIFIED="1596094887469" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/python_sql$__init__.coverage" NAME="__init__ Coverage Results" MODIFIED="1594724326939" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/MySQL" />
     <SUITE FILE_PATH="coverage/python_sql$a.coverage" NAME="a Coverage Results" MODIFIED="1596091642436" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/sqllib/test" />
     <SUITE FILE_PATH="coverage/python_sql$mysql_test.coverage" NAME="mysql-test Coverage Results" MODIFIED="1594724639962" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
