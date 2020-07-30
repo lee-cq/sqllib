@@ -52,4 +52,4 @@ setup_args = {
     ]
 }
 
-setup(name='m3u8-down', **setup_args)
+setup(name=PACKAGE, **setup_args)
