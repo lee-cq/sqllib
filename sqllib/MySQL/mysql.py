@@ -44,8 +44,8 @@
 import logging
 import sys
 import pymysql
-from sql_error import *
-from SQLCommon import sql_join
+from sqllib.MySQL.sql_error import *
+from sqllib.SQLCommon import sql_join
 from DBUtils.PooledDB import PooledDB
 from warnings import filterwarnings
 
@@ -57,7 +57,7 @@ terminal_handler = logging.StreamHandler(sys.stdout)
 terminal_handler.setFormatter(formatter)  # 日志文件的格式
 logger.setLevel(logging.DEBUG)  # 设置日志文件等级
 
-__all__ = ['MyMySqlAPI', 'TencentMySQL', 'LocalhostMySQL']
+__all__ = ['MyMySqlAPI', 'MySqlAPI', 'LocalhostMySQL']
 
 
 class MyMySQL:
@@ -691,28 +691,9 @@ class MyMySqlAPI(MyMySQL):
         return self._alter(table, command)
 
 
-class TencentMySQL(MyMySqlAPI):
-    """
-    腾讯Mysql的入口；
-    """
-
-    def __init__(self, user, passwd, db,
-                 host='t.sql.leecq.xyz', port=10080,
-                 charset='utf8', **kwargs):
-        self.SQL_HOST = host  # 主机
-        self.SQL_PORT = port  # 端口
-        self.SQL_USER = user  # 用户
-        self.SQL_PASSWD = passwd  # 密码
-        self.SQL_DB = db  # 数据库
-        self.SQL_CHARSET = charset  # 编码
-        super().__init__(host=self.SQL_HOST,
-                         port=self.SQL_PORT,
-                         user=self.SQL_USER,
-                         passwd=self.SQL_PASSWD,
-                         db=self.SQL_DB,
-                         charset=self.SQL_CHARSET,
-                         **kwargs
-                         )
+class MySqlAPI(MyMySqlAPI):
+    """API别名"""
+    pass
 
 
 class LocalhostMySQL(MyMySqlAPI):

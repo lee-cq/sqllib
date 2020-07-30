@@ -39,7 +39,7 @@
 
 """
 
-from .mysql import MyMySqlAPI, TencentMySQL, LocalhostMySQL
+from .mysql import MyMySqlAPI, MySqlAPI, LocalhostMySQL
 
 
 class Test(MyMySqlAPI):

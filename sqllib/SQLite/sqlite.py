@@ -9,17 +9,17 @@ SQLite
 
 2020.01.28 -- _select OFFSET 添加str()
 """
-import sys, logging
+import logging
+import sys
+import sqlite3
+from sqllib.SQLCommon import sql_join
 
 logger = logging.getLogger("logger")  # 创建实例
 formatter = logging.Formatter("[%(asctime)s] < %(funcName)s: %(thread)d > [%(levelname)s] %(message)s")
 # 终端日志
-consle_handler = logging.StreamHandler(sys.stdout)
-consle_handler.setFormatter(formatter)  # 日志文件的格式
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)  # 日志文件的格式
 logger.setLevel(logging.DEBUG)  # 设置日志文件等级
-
-import sqlite3
-from ..SQLCommon import sql_join
 
 
 class SQLiteError(Exception):
@@ -209,6 +209,7 @@ class MySQLite:
         """ 向数据库插入内容。
 
         :param table_name: 表名；
+        :param ignore_repeat: 唯一约束失败时, 忽略重复错误.
         :param kwargs: 字段名 = 值；
         :return:
         """
@@ -227,24 +228,26 @@ class MySQLite:
                     raise SQLiteInsertZipError(f"INSERT一条数据时，出现列表列或元组！确保数据统一: VALUE({x})")
             return self.__write_db(_c, list(kwargs.values()))  # 提交
 
-    def _insert_rows(self, table_name, args, k=None, ignore_repeat=False):
-        """插入
-
-        :param table_name:
-        :param args:
-        :param ignore_repeat:
-        :return:
-        """
-        _a = [_.values() for _ in args]
-        if k is None:
-            if not isinstance(args[0], dict): raise ValueError(f'既没有k, 也不是dict')
-            k = args[0].keys()
-        _ignore = 'OR IGNORE' if ignore_repeat else ''
-        _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
-        _c += ", ".join([_ for _ in k]) + " ) "
-        _c += "VALUES ( "
-        _c += ", ".join([f"?" for _ in args[0].values()]) + ");"
-        return self.__write_many(_c, _a)
+    # def _insert_rows(self, table_name, args, k=None, ignore_repeat=False):
+    #     """插入
+    #
+    #     :param table_name: 表名
+    #     :param args:
+    #     :param k:
+    #     :param ignore_repeat:
+    #     :return:
+    #     """
+    #     _a = [_.values() for _ in args]
+    #     if k is None:
+    #         if not isinstance(args[0], dict):
+    #             raise ValueError(f'既没有k, 也不是dict')
+    #         k = args[0].keys()
+    #     _ignore = 'OR IGNORE' if ignore_repeat else ''
+    #     _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
+    #     _c += ", ".join([_ for _ in k]) + " ) "
+    #     _c += "VALUES ( "
+    #     _c += ", ".join([f"?" for _ in args[0].values()]) + ");"
+    #     return self.__write_many(_c, _a)
 
     # 检索表
     def _select(self, table, cols: list and tuple, result_type=None, **kwargs):
@@ -286,8 +289,8 @@ class MySQLite:
         :param kwargs: 更新的键 = 更新的值， 注意大小写，数字键要加 - ``
         :return: 0 成功。
         """
-        self._key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
 
+        self._key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
         command = f"UPDATE `{self.TABLE_PREFIX}{table}` SET  " + \
                   ' , '.join([f" {k}=? " for k, v in kwargs.items()]) + \
                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句
@@ -397,9 +400,12 @@ class SQLiteAPI(MySQLite):
         :return:
         """
         _cols = []
-        if isinstance(cols, str): _cols.append(cols)
-        if isinstance(cols, (list, tuple)): [_cols.append(_) for _ in cols]
-        if not args: [_cols.append(_) for _ in args]
+        if isinstance(cols, str):
+            _cols.append(cols)
+        if isinstance(cols, (list, tuple)):
+            [_cols.append(_) for _ in cols]
+        if not args:
+            [_cols.append(_) for _ in args]
         return self._select(table, _cols, result_type=result_type, **kwargs)
 
     def update(self, table, where_key, where_value, **kwargs):
@@ -442,7 +448,7 @@ class SQLiteAPI(MySQLite):
 
 
 if __name__ == '__main__':
-    logger.addHandler(consle_handler)  #
+    logger.addHandler(console_handler)  #
 
     a = SQLiteAPI('./sup/test.db')
     a.create_table('test2', 'id int unique, name varchar(100)', ignore_exists=True)

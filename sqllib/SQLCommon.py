@@ -19,10 +19,10 @@ logger.setLevel(logging.DEBUG)  # 设置日志文件等级
 import json
 
 
-def _get(l: list or tuple, n: int) -> str:
+def _get(_l: list or tuple, n: int) -> str:
     """列表中取值，"""
     try:
-        return l[n]
+        return _l[n]
     except:
         return ''
 

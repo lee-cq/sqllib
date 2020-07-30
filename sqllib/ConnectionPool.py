@@ -19,7 +19,9 @@ POOL = PooledDB(
     blocking=True,  # 连接池中如果没有可用连接后，是否阻塞等待。True，等待；False，不等待然后报错
     maxusage=None,  # 一个链接最多被重复使用的次数，None表示无限制
     setsession=[],  # 开始会话前执行的命令列表。如：["set datestyle to ...", "set time zone ..."]
-    ping=0,  # ping MySQL服务端，检查是否服务可用，如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
+    ping=1,  # ping MySQL服务端，检查是否服务可用，
+    # 如：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created,
+    # 4 = when a query is executed, 7 = always
     host="127.0.0.1",
     port=3306,
     user="root",

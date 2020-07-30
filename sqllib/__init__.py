@@ -32,12 +32,13 @@ LiteDB:
 """
 
 from .SQLite import SQLiteAPI
-from .MySQL import MyMySqlAPI, TencentMySQL
+from .MySQL import MyMySqlAPI, MySqlAPI
 from .SQLCommon import sql_join
 
 # from . import SQLCommon
 
 # 直接访问会出错，但是，其他模块可以正常导入这些API
+__version__ = '0.2.5'
 
 __all__ = ['SQLCommon',
-           'SQLiteAPI', 'MyMySqlAPI', 'TencentMySQL', 'sql_join']
+           'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']
