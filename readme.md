@@ -7,7 +7,7 @@
 ## 依赖包
 1. PyMySQL>=0.9.3
 2. DBUtils>=1.3
-3. pymongo>=3.10.1
+3. pymongo>=3.10.1  `已取消依赖`
 4. setuptools>=49.2.0 
 
 ## MySqlAPI

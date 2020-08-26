@@ -14,7 +14,7 @@ PACKAGE = "sqllib"
 DESCRIPTION = "对MySQL.SQLite等数据库进行接口集成."
 AUTHOR = "Lee CQ"
 AUTHOR_EMAIL = "lee-cq@qq.com"
-# URL = "null"
+URL = "https://leecq.cn"
 
 TOPDIR = os.path.dirname(__file__) or "."
 VERSION = __import__(PACKAGE).__version__
@@ -26,6 +26,9 @@ with open("readme.md", encoding='utf8') as fp:
 with open("requirements.txt") as fp:
     requires = fp.read().split('\n')
 
+with open('./updateLog', encoding='utf8') as fp:
+    update_log = fp.read()
+
 
 setup_args = {
     'version': VERSION,
@@ -34,7 +37,7 @@ setup_args = {
     'author': AUTHOR,
     'author_email': AUTHOR_EMAIL,
     'license': "Apache License 2.0",
-    # 'url': URL,
+    'url': URL,
     'keywords': ["MySQL", "API", "SQLite", 'DB'],
     'packages': find_packages(exclude=["tests*"]),
     # 'package_data': {'aliyunsdkcore': ['data/*.json', '*.pem', "vendored/*.pem"],

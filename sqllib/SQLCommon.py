@@ -12,11 +12,9 @@ import sys
 logger = logging.getLogger("SQL")  # 创建实例
 formatter = logging.Formatter("[%(asctime)s] < %(funcName)s: %(lineno)d > [%(levelname)s] %(message)s")
 # 终端日志
-consle_handler = logging.StreamHandler(sys.stdout)
-consle_handler.setFormatter(formatter)  # 日志文件的格式
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setFormatter(formatter)  # 日志文件的格式
 logger.setLevel(logging.DEBUG)  # 设置日志文件等级
-
-import json
 
 
 def _get(_l: list or tuple, n: int) -> str:

@@ -406,6 +406,7 @@ class SQLiteAPI(MySQLite):
             [_cols.append(_) for _ in cols]
         if not args:
             [_cols.append(_) for _ in args]
+        # print(_cols)
         return self._select(table, _cols, result_type=result_type, **kwargs)
 
     def update(self, table, where_key, where_value, **kwargs):
@@ -450,13 +451,6 @@ class SQLiteAPI(MySQLite):
 if __name__ == '__main__':
     logger.addHandler(console_handler)  #
 
-    a = SQLiteAPI('./sup/test.db')
-    a.create_table('test2', 'id int unique, name varchar(100)', ignore_exists=True)
-    _ = a.insert('test2', ignore_repeat=True, id=[7, 8, 19], name=['ww', 'qq', 'ee'])
-    # _ = a.insert_line2line('test2', id=[7,8,9], name=['ww', 'qq', 'ee'])
-    # a.write_no_except(f"insert or IGNORE into test2 (id, name) VALUES ('1', 'name1');")
-    # a.update('test2', 'id', 1, name='NEW')
-    # a.delete('test2', id='2')
-    _ = a.select('test2', '*', result_type=dict)
-    # _ = a.read_db('PRAGMA table_info(test1);', result_type=dict)
-    print(_)
+    a = SQLiteAPI('')
+    
+    print(a)

@@ -35,10 +35,10 @@ from .SQLite import SQLiteAPI
 from .MySQL import MyMySqlAPI, MySqlAPI
 from .SQLCommon import sql_join
 
-# from . import SQLCommon
+# __import__('SQLCommon')
 
 # 直接访问会出错，但是，其他模块可以正常导入这些API
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 __all__ = ['SQLCommon',
            'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']

@@ -49,7 +49,6 @@ from sqllib.SQLCommon import sql_join
 from DBUtils.PooledDB import PooledDB
 from warnings import filterwarnings
 
-
 logger = logging.getLogger("MySQL")  # 创建实例
 formatter = logging.Formatter("[%(asctime)s] < %(funcName)s: %(lineno)d > [%(levelname)s] %(message)s")
 # 终端日志
@@ -105,7 +104,8 @@ class MyMySQL:
     :param str prefix:  表前缀
     """
 
-    def __init__(self, host, port, user, passwd, db, charset, use_unicode=None, **kwargs):
+    def __init__(self, host, port, user, passwd, db, charset,
+                 use_unicode=None, pool=False,**kwargs):
         self.SQL_HOST = host  # 主机
         self.SQL_PORT = port  # 端口
         self.SQL_USER = user  # 用户
@@ -125,6 +125,7 @@ class MyMySQL:
                                     **kwargs
                                     )
         self.pooled_sql = None
+        self.pooling_sql() if pool else None
 
     def set_use_db(self, db_name):
         """设置当前数据库"""
@@ -253,7 +254,7 @@ class MyMySQL:
     # 获取数据库的表名
     def __tables_name(self) -> list:
         """由于链接时已经指定数据库，无需再次指定。返回数据库中所有表的名字。"""
-        return [_c[0].decode() for _c in self.__read_db("show tables")]
+        return [_c[0].decode() if isinstance(_c[0], bytes) else _c[0] for _c in self.__read_db("show tables")]
 
     # 判断表、键值的存在性
     def __key_and_table_is_exists(self, table, key, *args, **kwargs):
@@ -476,10 +477,6 @@ class MyMySQL:
 
 class MyMySqlAPI(MyMySQL):
     """
-        Representation of a socket with a mysql server__test.
-
-        Establish a connection to the MySQL database. Accepts several
-        arguments:
 
     **kwargs in __init__() : Optionally
 
@@ -609,7 +606,7 @@ class MyMySqlAPI(MyMySQL):
         """
         return self._insert(table, ignore=ignore, **kwargs)
 
-    def select(self, table, column_name, *args, result_type=None, **kwargs):
+    def select(self, table, cols, *args, result_type=None, **kwargs):
         """ 从数据库中查找数据；
 
             column_name 可以设置别名；
@@ -624,7 +621,14 @@ class MyMySqlAPI(MyMySQL):
                       特殊键：result_type = {dict, None, tuple, 'SSCursor', 'SSDictCursor'}
         :return 结果集 通过键 - result_type 来确定 -
         """
-        columns_name = [column_name] + list(args)
+        _cols = []
+        if isinstance(cols, str):
+            _cols.append(cols)
+        if isinstance(cols, (list, tuple)):
+            [_cols.append(_) for _ in cols]
+        if not args:
+            [_cols.append(_) for _ in args]
+        # print(_cols)
         return self._select(table, columns_name, result_type=result_type, **kwargs)
 
     def select_new(self, table, columns_name: tuple or list, result_type=None, **kwargs):
