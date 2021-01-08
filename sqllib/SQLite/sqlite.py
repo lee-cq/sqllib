@@ -391,7 +391,7 @@ class SQLiteAPI(MySQLite):
             raise SQLiteModuleError('插入单条数据请使用 insert()方法。')
 
     def select(self, table, cols, *args, result_type=None, **kwargs):
-        """
+        """ SQLite 查询数据库
 
         :param table:
         :param cols:

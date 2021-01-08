@@ -11,7 +11,7 @@ import os
 from setuptools import setup, find_packages
 
 PACKAGE = "sqllib"
-DESCRIPTION = "对MySQL.SQLite等数据库进行接口集成."
+DESCRIPTION = "对MySQL, SQLite等数据库进行接口集成."
 AUTHOR = "Lee CQ"
 AUTHOR_EMAIL = "lee-cq@qq.com"
 URL = "https://leecq.cn"

@@ -46,7 +46,7 @@ import sys
 import pymysql
 from sqllib.MySQL.sql_error import *
 from sqllib.SQLCommon import sql_join
-from DBUtils.PooledDB import PooledDB
+from dbutils.pooled_db import PooledDB
 from warnings import filterwarnings
 
 logger = logging.getLogger("MySQL")  # 创建实例
@@ -105,7 +105,7 @@ class MyMySQL:
     """
 
     def __init__(self, host, port, user, passwd, db, charset,
-                 use_unicode=None, pool=False,**kwargs):
+                 use_unicode=None, pool=False, **kwargs):
         self.SQL_HOST = host  # 主机
         self.SQL_PORT = port  # 端口
         self.SQL_USER = user  # 用户
@@ -389,7 +389,7 @@ class MyMySQL:
         _update_data = ' , '.join([f" `{k}`=%({k})s  " for k, v in kwargs.items()])  # 构造更新内容
         command = (f"UPDATE `{self.TABLE_PREFIX}{table}` SET  "
                    f"{_update_data}"
-                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句
+                   f" WHERE {where_key}='{where_value}' ;"  # 构造WHERE语句
                    )
         return self.__write_db(command, kwargs)  # 执行SQL语句
 
@@ -615,12 +615,13 @@ class MyMySqlAPI(MyMySQL):
             注意：column_name, table, key 可以用 ` ` 包裹， value 一定不能用，
                   如果有需要，value 用 ' ' 。
         :param table:
-        :param column_name: 传参时自行使用 `` , 尤其是数字开头的参数
+        :param cols: 传参时自行使用 `` , 尤其是数字开头的参数
         :param result_type: 返回结果集：{dict, None, tuple, 'SSCursor', 'SSDictCursor'}
         :param kwargs: {'WHERE', 'LIMIT', 'OFFSET', 'ORDER'} 全大写
                       特殊键：result_type = {dict, None, tuple, 'SSCursor', 'SSDictCursor'}
         :return 结果集 通过键 - result_type 来确定 -
         """
+        SQLite: None
         _cols = []
         if isinstance(cols, str):
             _cols.append(cols)
@@ -628,8 +629,7 @@ class MyMySqlAPI(MyMySQL):
             [_cols.append(_) for _ in cols]
         if not args:
             [_cols.append(_) for _ in args]
-        # print(_cols)
-        return self._select(table, columns_name, result_type=result_type, **kwargs)
+        return self._select(table, _cols, result_type=result_type, **kwargs)
 
     def select_new(self, table, columns_name: tuple or list, result_type=None, **kwargs):
         """ SELECT的另一种传参方式：
@@ -639,7 +639,7 @@ class MyMySqlAPI(MyMySQL):
         :param columns_name:
         :type columns_name: tuple or list
         :param result_type: 返回结果集类型：{dict, None, tuple, 'SSCursor', 'SSDictCursor'}
-        :return: 结果集 通过键 - result_type 来确定 -
+        :return: 结果集 通过键 - result_type 来确定
         """
         return self._select(table, columns_name, result_type=result_type, **kwargs)
 

@@ -1,16 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """
-@File Name  : ConnectionPool.py
+@File Name  : connection_pool.py
 @Author     : LeeCQ
 @Date-Time  : 2019/12/15 16:51
 
 """
-from DBUtils.PooledDB import PooledDB
-import pymysql
-from DBUtils.PooledDB import PooledDB
+from dbutils.pooled_db import PooledDB
+
+dbs = ''
+
 POOL = PooledDB(
-    creator=pymysql,   # 使用链接数据库的模块
+    creator=dbs,   # 使用链接数据库的模块
     maxconnections=6,  # 连接池允许的最大连接数，0和None表示不限制连接数
     mincached=2,  # 初始化时，链接池中至少创建的空闲的链接，0表示不创建
     maxcached=5,  # 链接池中最多闲置的链接，0和None不限制
