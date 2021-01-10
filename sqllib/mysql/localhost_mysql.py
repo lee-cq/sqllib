@@ -9,7 +9,7 @@
 """
 
 
-from sqllib.MySQL import MyMySqlAPI
+from sqllib.mysql import MyMySqlAPI
 # from DBUtils.PooledDB import PooledDB
 
 

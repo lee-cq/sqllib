@@ -7,8 +7,8 @@
 
 模块对应关系：
 1. DBBase, ABCBase
-2. SQLBase(DBBase)  ,  NoSQLBase(DBBase)
-3.1 MySQLBase(SQLBase, ABCBase)  ,  SQLiteBASE(SQLBase, ABCBase)
+2. BaseSQL(DBBase)  ,  NoSQLBase(DBBase)
+3.1 MyBaseSQL(BaseSQL, ABCBase)  ,  SQLiteBASE(BaseSQL, ABCBase)
 3.2 MongdbBASE(NoSQLBase, ABCBase)  ,
 
 """

@@ -3,7 +3,7 @@
 @Time   : 2019/11/25 13:15
 @Author : LeeCQ
 
-[MySQL(pymysql, 需要服务器),  MongoDB(pyMongoDB，需要服务器),
+[mysql(pymysql, 需要服务器),  MongoDB(pyMongoDB，需要服务器),
  SQLite(关系型数据库, Python原生支持),
  bsddb(NoSQL Bsddb3),
  UnQLite(NoSQL),
@@ -14,7 +14,7 @@
 
 ]
 
-MySQL:
+mysql:
 
 SQLite:
 
@@ -32,13 +32,14 @@ LiteDB:
 """
 
 from .SQLite import SQLiteAPI
-from .MySQL import MyMySqlAPI, MySqlAPI
-from .SQLCommon import sql_join
+from .mysql import MyMySqlAPI, MySqlAPI
+from .common.common import sql_join
+from .common import common
 
 # __import__('SQLCommon')
 
 # 直接访问会出错，但是，其他模块可以正常导入这些API
 __version__ = '0.2.6'
 
-__all__ = ['SQLCommon',
+__all__ = ['common',
            'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']

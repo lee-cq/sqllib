@@ -38,7 +38,7 @@ setup_args = {
     'author_email': AUTHOR_EMAIL,
     'license': "Apache License 2.0",
     'url': URL,
-    'keywords': ["MySQL", "API", "SQLite", 'DB'],
+    'keywords': ["mysql", "API", "SQLite", 'DB'],
     'packages': find_packages(exclude=["tests*"]),
     # 'package_data': {'aliyunsdkcore': ['data/*.json', '*.pem', "vendored/*.pem"],
     #                  'aliyunsdkcore.vendored.requests.packages.certifi': ['cacert.pem']},

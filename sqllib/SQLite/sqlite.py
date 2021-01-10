@@ -12,7 +12,9 @@ SQLite
 import logging
 import sys
 import sqlite3
-from sqllib.SQLCommon import sql_join
+from sqllib.common.common import sql_join
+from sqllib.common.base_sql import BaseSQL, BaseSQLAPI
+from sqllib.common.error import *
 
 logger = logging.getLogger("logger")  # 创建实例
 formatter = logging.Formatter("[%(asctime)s] < %(funcName)s: %(thread)d > [%(levelname)s] %(message)s")
@@ -21,29 +23,7 @@ console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(formatter)  # 日志文件的格式
 logger.setLevel(logging.DEBUG)  # 设置日志文件等级
 
-
-class SQLiteError(Exception):
-    """基础错误"""
-
-
-class SQLiteWriteError(SQLiteError):
-    """写数据库错误"""
-
-
-class SQLiteReadError(SQLiteError):
-    """都数据库错误"""
-
-
-class SQLiteInsertZipError(SQLiteError):
-    """数据打包错误"""
-
-
-class SQLiteNameError(SQLiteError):
-    """数据库名称错误"""
-
-
-class SQLiteModuleError(SQLiteError):
-    """数据库模块错误"""
+__all__ = ['SQLiteAPI', 'SQLiteBase']
 
 
 # 以字典形式返回游标的sqlite实现
@@ -58,7 +38,7 @@ def dict_factory(cursor, row) -> dict:
     return d
 
 
-class MySQLite:
+class SQLiteBase(BaseSQL):
     """SQLite实现的基类
 
     """
@@ -67,9 +47,15 @@ class MySQLite:
         self._sql = sqlite3.connect(db, **kwargs)
         self.TABLE_PREFIX = '' if 'prefix' not in kwargs.keys() else kwargs['prefix']
 
+    def close(self):
+        self._sql.close()
+
     def close_db(self):
         """关闭数据库链接，并退出"""
         self._sql.close()
+
+    def pooling_sql(self):
+        pass
 
     @property
     def get_connect(self):
@@ -77,7 +63,7 @@ class MySQLite:
         return self._sql
 
     # 写数据库操作
-    def __write_db(self, command, args=None):
+    def _write_db(self, command, args=None):
         __sql = self._sql
         cur = __sql.cursor()  # 使用cursor()方法获取操作游标
         try:
@@ -92,7 +78,7 @@ class MySQLite:
             raise sqlite3.IntegrityError(e)
         except Exception as e:
             __sql.rollback()
-            raise SQLiteError(f'操作数据库时出现问题，数据库已回滚至操作前：{e}')
+            raise SqlWriteError(f'操作数据库时出现问题，数据库已回滚至操作前：{e}')
         finally:
             cur.close()
 
@@ -108,7 +94,7 @@ class MySQLite:
         cur.close()
         return 0
 
-    def __write_many(self, command, args):
+    def _write_affair(self, command, args):
         """数据库事务写入。"""
         __sql = self._sql
         cur = __sql.cursor()
@@ -119,7 +105,7 @@ class MySQLite:
         except Exception as e:
             __sql.rollback()
             sys.exc_info()
-            raise SQLiteWriteError(f"执行写事物时出错，已回滚：{e}")
+            raise SqlWriteError(f"执行写事物时出错，已回滚：{e}")
         finally:
             cur.close()
 
@@ -143,36 +129,15 @@ class MySQLite:
     def write_db(self, cmd, args=None):
         """数据库操作的对外接口。"""
         # logger.warning("使用此函数时注意表前缀! ")
-        return self.__write_db(cmd, args)
+        return self._write_db(cmd, args)
 
     def write_no_except(self, cmd, args=None):
         """数据库写入对外接口，它没有收集任何错误! """
         logger.warning("使用此函数时注意表前缀! ")
         return self.__write_no_except(cmd, args)
 
-    # 判断表、键值的存在性
-    def _key_and_table_is_exists(self, table, *args, **kwargs):
-        """ 判断 key & table 是否存在
-
-        :param table: 前缀 + 表单名
-        :param key, args: 键名
-        :param kwargs: 键名=键值；
-        :return: 0 存在
-        """
-        if table not in self.show_tables():
-            raise SQLiteNameError(f"{table} NOT in The Database. (ALL Tables {self.show_tables()}")
-        cols = self.show_columns(table)
-
-        not_in_table_keys = [k for k, v in kwargs.items() if k not in cols]
-        not_in_table_keys += [k for k in args if k not in cols]
-        if not_in_table_keys:
-            raise SQLiteNameError(f'The key {not_in_table_keys} NOT in this Table: {table};'
-                                  f'(ALL Columns {cols})'
-                                  )
-        return 0
-
     # 创建数据库
-    def create_table(self, keys, table_name, ignore_exists=True):
+    def _create_table(self, keys, table_name, exists_ok, table_args, *args):
         """创建数据表
 
            CREATE TABLE IF NOT EXISTS COMPANY(
@@ -191,18 +156,7 @@ class MySQLite:
         _c = f"CREATE TABLE {_ignore} {self.TABLE_PREFIX}{table_name} ( "
         _c += keys + ");"
         logger.debug(_c)
-        return self.__write_db(_c)
-
-    @staticmethod  # 插入或更新多条数据时，数据格式转换
-    def _insert_zip(values):
-        """一次向插入数据库多条数据时，打包相应的数据。"""
-        for x in values:
-            if not isinstance(x, (tuple, list)):
-                raise SQLiteInsertZipError(f"INSERT多条数据时，出现非列表列！确保数据都是list或者tuple。\n错误的值是：{x}")
-            if not len(values[0]) == len(x):
-                raise SQLiteInsertZipError(f'INSERT多条数据时，元组长度不整齐！请确保所有列的长度一致！\n'
-                                           f'[0号]{len(values[0])}-[{values.index(x)}号]{len(x)}')
-        return tuple([v for v in zip(*values)])  # important *
+        return self._write_db(_c)
 
     # 插入表数据
     def _insert(self, table_name, ignore_repeat=False, **kwargs):
@@ -220,13 +174,13 @@ class MySQLite:
         _c += ", ".join([f"?" for _ in kwargs.values()]) + ");"
 
         if isinstance(list(kwargs.values())[0], (tuple, list)):  # kwargs第一个键是不是字符串
-            arg = self._insert_zip(tuple(kwargs.values()))
-            return self.__write_many(_c, arg)
+            arg = self.zip_data_for_insert(tuple(kwargs.values()))
+            return self._write_affair(_c, arg)
         else:
             for x in kwargs.values():
                 if isinstance(x, (list, tuple, set)):
-                    raise SQLiteInsertZipError(f"INSERT一条数据时，出现列表列或元组！确保数据统一: VALUE({x})")
-            return self.__write_db(_c, list(kwargs.values()))  # 提交
+                    raise InsertZipError(f"INSERT一条数据时，出现列表列或元组！确保数据统一: VALUE({x})")
+            return self._write_db(_c, list(kwargs.values()))  # 提交
 
     # def _insert_rows(self, table_name, args, k=None, ignore_repeat=False):
     #     """插入
@@ -290,25 +244,25 @@ class MySQLite:
         :return: 0 成功。
         """
 
-        self._key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
+        self.key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
         command = f"UPDATE `{self.TABLE_PREFIX}{table}` SET  " + \
                   ' , '.join([f" {k}=? " for k, v in kwargs.items()]) + \
                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句
 
-        return self.__write_db(command, [_ for _ in kwargs.values()])  # 执行SQL语句
+        return self._write_db(command, [_ for _ in kwargs.values()])  # 执行SQL语句
 
     # 删除表数据 一行
-    def _delete(self, table, **kwargs):
+    def _delete(self, table, where_key, where_value, **kwargs):
         """删除数据表中的某一行数据，
         :param table:
         :param kwargs: 键名=键值；最好是数据库的主键或唯一的键。如果数据库没有，则最好组合where，以保证删除 - 唯一行。
         """
-        self._key_and_table_is_exists(self.TABLE_PREFIX + table, **kwargs)  # 判断键的存在性
+        self.key_and_table_is_exists(self.TABLE_PREFIX + table, **kwargs)  # 判断键的存在性
 
         command = f"DELETE FROM `{self.TABLE_PREFIX}{table}` WHERE  "
         for k, v in kwargs.items():
             command += f"{k}='{v}'"
-        return self.__write_db(command)
+        return self._write_db(command)
 
     # 删除表或者数据库
     def _drop(self, option, name):
@@ -322,7 +276,15 @@ class MySQLite:
             command = f'DROP  {option}  `{self.TABLE_PREFIX}{name}`'
         else:
             command = f'DROP  {option}  `{name}`'
-        return self.__write_db(command)
+        return self._write_db(command)
+
+    def _tables_name(self) -> list:
+        """"""
+        return self.show_tables(name_only=True)
+
+    def _columns_name(self, table):
+        """"""
+        return [_c[0] for _c in self.show_columns(table)]
 
     def show_tables(self, name_only: bool = True):
         """
@@ -352,10 +314,10 @@ class MySQLite:
         """ 目前sqlite只支持RENAME，ADD COLUMN """
         table = self.TABLE_PREFIX + table
         _c = f'ALTER TABLE {table}  {command}'
-        return self.__write_db(_c)
+        return self._write_db(_c)
 
 
-class SQLiteAPI(MySQLite):
+class SQLiteAPI(SQLiteBase, BaseSQLAPI):
     """接口类"""
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -380,7 +342,7 @@ class SQLiteAPI(MySQLite):
         """已单条的形式插入大量数据 - 不推荐"""
         logger.warning('这个函数的性能极低！谨慎使用！')
         if not isinstance(list(kwargs.values())[0], str):  # kwargs第一个键是不是字符串
-            arg = self._insert_zip(tuple(kwargs.values()))
+            arg = self.zip_data_for_insert(tuple(kwargs.values()))
             for _a in arg:  # 关键逻辑
                 try:
                     self._insert(table_name, **{_k: _a[index] for index, _k in enumerate(kwargs.keys())})
@@ -388,7 +350,7 @@ class SQLiteAPI(MySQLite):
                     logger.warning(f'Except: {e}')
             return 0
         else:
-            raise SQLiteModuleError('插入单条数据请使用 insert()方法。')
+            raise SqlModuleError('插入单条数据请使用 insert()方法。')
 
     def select(self, table, cols, *args, result_type=None, **kwargs):
         """ SQLite 查询数据库
@@ -452,5 +414,5 @@ if __name__ == '__main__':
     logger.addHandler(console_handler)  #
 
     a = SQLiteAPI('')
-    
+
     print(a)

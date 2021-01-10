@@ -8,7 +8,7 @@
 
 """
 
-from .mysql import MyMySqlAPI, MySqlAPI, LocalhostMySQL
+from .mysqlbase import MyMySqlAPI, MySqlAPI
 
 
 class Test(MyMySqlAPI):
