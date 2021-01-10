@@ -34,12 +34,11 @@ LiteDB:
 from .SQLite import SQLiteAPI
 from .mysql import MyMySqlAPI, MySqlAPI
 from .common.common import sql_join
+from .common.base_sql import BaseSQL, BaseSQLAPI
 from .common import common
 
-# __import__('SQLCommon')
-
 # 直接访问会出错，但是，其他模块可以正常导入这些API
-__version__ = '0.2.6'
+__version__ = '0.2.7'
 
-__all__ = ['common',
-           'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']
+# __all__ = ['common', 'BaseSQL',
+#            'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']

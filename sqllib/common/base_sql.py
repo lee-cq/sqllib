@@ -14,7 +14,7 @@ from .error import *
 __all__ = ['BaseSQL', 'BaseSQLAPI']
 
 from .common import sql_join
-from sqllib.SQLite.sqlite import SQLiteBase
+# from sqllib.SQLite.sqlite import SQLiteBase
 
 
 class BaseSQL(DBBase, ABC):
@@ -58,7 +58,7 @@ class BaseSQL(DBBase, ABC):
             raise SqlTableNameError(f"{table} NOT in This Database: {self.SQL_DB};\n"
                                     f"(ALL Tables {self._tables_name()}")
 
-        cols = [i.decode() for i in self._columns_name(table)]
+        cols = [i.decode() if isinstance(i, bytes) else i for i in self._columns_name(table)]
         not_in_table_keys = [k.upper() for k, v in kwargs.items() if k not in cols]
         not_in_table_keys += [k.upper() for k in args if k not in cols]
         if key.upper() not in cols and not_in_table_keys:
@@ -96,7 +96,7 @@ class BaseSQL(DBBase, ABC):
         pass
 
 
-class BaseSQLAPI(SQLiteBase, ABC):
+class BaseSQLAPI(BaseSQL, ABC):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
@@ -122,7 +122,7 @@ class BaseSQLAPI(SQLiteBase, ABC):
         :param args: 无，不要填
         :return: 0 成功
         """
-        if isinstance(cmd, tuple):
+        if isinstance(cmd, (tuple, list)):
             cmd = sql_join(cmd)[0]
         return self._create_table(cmd, table_name, exists_ok=exists_ok, table_args=table_args, *args)
 

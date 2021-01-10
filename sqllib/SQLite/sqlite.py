@@ -151,7 +151,7 @@ class SQLiteBase(BaseSQL):
         if isinstance(keys, tuple):
             keys = sql_join(keys)[1]  #
         keys = keys.rstrip().rstrip(',')
-        _ignore = ' IF NOT EXISTS ' if ignore_exists else ''
+        _ignore = ' IF NOT EXISTS ' if exists_ok else ''
 
         _c = f"CREATE TABLE {_ignore} {self.TABLE_PREFIX}{table_name} ( "
         _c += keys + ");"

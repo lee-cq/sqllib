@@ -375,7 +375,7 @@ class MyBaseSQL(BaseSQL):
         :return: 0 成功
         """
         if option.upper() == 'TABLE':
-            command = f'DROP  {option}  `{self.TABLE_PREFIX}{name}`'
+            command = f'DROP  {option}  `{"" if name.upper().startswith(self.TABLE_PREFIX) else self.TABLE_PREFIX}{name}`'
         else:
             command = f'DROP  {option}  `{name}`'
         return self._write_db(command)
@@ -540,7 +540,7 @@ class MySqlAPI(MyBaseSQL, BaseSQLAPI):
         specification.
         """
 
-    def __init__(self, host, port, user, passwd, db, charset, warning=True, **kwargs):
+    def __init__(self, host, port, user, passwd, db, charset='utf8', warning=True, **kwargs):
         super().__init__(host, port, user, passwd, db, charset, **kwargs)
         if not warning:
             filterwarnings("ignore", category=pymysql.Warning)
