@@ -7,13 +7,13 @@
 """
 from abc import ABC, abstractmethod
 
-__all__ = ['ABCBase', 'DBBase']
+__all__ = ['APIBase', 'DBBase']
 
 
 class DBBase(ABC):
     """基类"""
 
-    # TABLE_PREFIX = None
+    # TABLE_PREFIX = ''
     _sql = '__sql_connect()'
 
     @staticmethod
@@ -39,46 +39,53 @@ class DBBase(ABC):
         """设置表前缀"""
         self.TABLE_PREFIX = prefix
 
+    def parse_prefix(self, name):
+        """返回一个正确的真实的表名称"""
+        return name if name.startswith(self.TABLE_PREFIX) else self.TABLE_PREFIX + name
 
-class ABCBase(ABC):
+    def get_real_table_name(self, name):
+        return self.parse_prefix(name)
+
+
+class APIBase(ABC):
     """实现的抽象基类"""
 
     @abstractmethod
-    def show_dbs(self):
+    def show_dbs(self, *args, **kwargs):
         """输出数据库"""
 
     @abstractmethod
-    def show_tables(self):
+    def show_tables(self, *args, **kwargs):
         """展示数据表"""
 
     @abstractmethod
-    def insert(self):
+    def insert(self, *args, **kwargs):
         """插入数据（增）"""
 
     @abstractmethod
-    def delete(self):
+    def delete(self, *args, **kwargs):
         """删除数据行（删）"""
 
     @abstractmethod
-    def update(self):
+    def update(self, *args, **kwargs):
         """更新数据（改）"""
 
     @abstractmethod
-    def select(self):
+    def select(self, *args, **kwargs):
         """查询数据（查）"""
 
     @abstractmethod
-    def drop_table(self):
+    def drop_table(self, *args, **kwargs):
         """删除数据表"""
 
     @abstractmethod
-    def drop_db(self):
+    def drop_db(self, *args, **kwargs):
         """删除数据库"""
 
     @abstractmethod
-    def create_table(self):
+    def create_table(self, *args, **kwargs):
         """创建数据表"""
 
     @abstractmethod
-    def alter_table(self):
+    def alter_table(self, *args, **kwargs):
         """修改数据表"""

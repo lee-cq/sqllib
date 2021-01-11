@@ -12,6 +12,7 @@ SQLite
 import logging
 import sys
 import sqlite3
+import re
 from sqllib.common.common import sql_join
 from sqllib.common.base_sql import BaseSQL, BaseSQLAPI
 from sqllib.common.error import *
@@ -72,13 +73,11 @@ class SQLiteBase(BaseSQL):
             else:
                 cur.execute(command, args)
             __sql.commit()  # 提交数据库
-            return 0
-        except sqlite3.IntegrityError as e:
-            __sql.rollback()
-            raise sqlite3.IntegrityError(e)
+            return cur.rowcount
         except Exception as e:
             __sql.rollback()
-            raise SqlWriteError(f'操作数据库时出现问题，数据库已回滚至操作前：{e}')
+            raise SqlWriteError(f'操作数据库时出现问题，数据库已回滚至操作前：{e}'
+                                f'\n\n>>COMMEND:\n{command}\n>>ARGS:\n{args}')
         finally:
             cur.close()
 
@@ -105,7 +104,8 @@ class SQLiteBase(BaseSQL):
         except Exception as e:
             __sql.rollback()
             sys.exc_info()
-            raise SqlWriteError(f"执行写事物时出错，已回滚：{e}")
+            raise SqlWriteError(f"执行写事物时出错，已回滚：{e}"
+                                f"\n\n>>COMMEND:\n{command}\n>>ARGS:\n{args}")
         finally:
             cur.close()
 
@@ -153,7 +153,7 @@ class SQLiteBase(BaseSQL):
         keys = keys.rstrip().rstrip(',')
         _ignore = ' IF NOT EXISTS ' if exists_ok else ''
 
-        _c = f"CREATE TABLE {_ignore} {self.TABLE_PREFIX}{table_name} ( "
+        _c = f"CREATE TABLE {_ignore} {self.get_real_table_name(table_name)} ( "
         _c += keys + ");"
         logger.debug(_c)
         return self._write_db(_c)
@@ -168,17 +168,17 @@ class SQLiteBase(BaseSQL):
         :return:
         """
         _ignore = 'OR IGNORE' if ignore_repeat else ''
-        _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
+        _c = f"INSERT {_ignore} INTO {self.get_real_table_name(table_name)} ( "
         _c += ", ".join([_ for _ in kwargs.keys()]) + " ) "
         _c += "VALUES ( "
-        _c += ", ".join([f"?" for _ in kwargs.values()]) + ");"
-
+        _c += ", ".join([f"?" for _ in kwargs.values()]) + " ) ; "
+        # print(_c, kwargs)
         if isinstance(list(kwargs.values())[0], (tuple, list)):  # kwargs第一个键是不是字符串
             arg = self.zip_data_for_insert(tuple(kwargs.values()))
             return self._write_affair(_c, arg)
         else:
             for x in kwargs.values():
-                if isinstance(x, (list, tuple, set)):
+                if isinstance(x, (list, tuple)):
                     raise InsertZipError(f"INSERT一条数据时，出现列表列或元组！确保数据统一: VALUE({x})")
             return self._write_db(_c, list(kwargs.values()))  # 提交
 
@@ -197,7 +197,7 @@ class SQLiteBase(BaseSQL):
     #             raise ValueError(f'既没有k, 也不是dict')
     #         k = args[0].keys()
     #     _ignore = 'OR IGNORE' if ignore_repeat else ''
-    #     _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
+    #     _c = f"INSERT {_ignore} INTO {self.get_real_table_name(table)} ( "
     #     _c += ", ".join([_ for _ in k]) + " ) "
     #     _c += "VALUES ( "
     #     _c += ", ".join([f"?" for _ in args[0].values()]) + ");"
@@ -215,7 +215,7 @@ class SQLiteBase(BaseSQL):
         :param kwargs: {'WHERE', 'LIMIT', 'OFFSET', ORDER} 全大写
         :return 结果集
         """
-        command = f'SELECT  ' + ' , '.join(cols) + ' ' + f'FROM `{self.TABLE_PREFIX}{table}` '
+        command = f'SELECT  ' + ' , '.join(cols) + ' ' + f'FROM `{self.get_real_table_name(table)}` '
         # ===========================================
         # 下面是更好的解决方案
         # ===========================================
@@ -245,7 +245,7 @@ class SQLiteBase(BaseSQL):
         """
 
         self.key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
-        command = f"UPDATE `{self.TABLE_PREFIX}{table}` SET  " + \
+        command = f"UPDATE `{self.get_real_table_name(table)}` SET  " + \
                   ' , '.join([f" {k}=? " for k, v in kwargs.items()]) + \
                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句
 
@@ -257,11 +257,12 @@ class SQLiteBase(BaseSQL):
         :param table:
         :param kwargs: 键名=键值；最好是数据库的主键或唯一的键。如果数据库没有，则最好组合where，以保证删除 - 唯一行。
         """
-        self.key_and_table_is_exists(self.TABLE_PREFIX + table, **kwargs)  # 判断键的存在性
+        self.key_and_table_is_exists(self.get_real_table_name(table), where_key, **kwargs)  # 判断键的存在性
 
-        command = f"DELETE FROM `{self.TABLE_PREFIX}{table}` WHERE  "
+        command = f"DELETE FROM `{self.get_real_table_name(table)}` WHERE {where_key}='{where_value}' "
+        print(kwargs)
         for k, v in kwargs.items():
-            command += f"{k}='{v}'"
+            command += f'{k}="{v}"'
         return self._write_db(command)
 
     # 删除表或者数据库
@@ -273,18 +274,14 @@ class SQLiteBase(BaseSQL):
         :return: 0 成功
         """
         if option.upper() == 'TABLE':
-            command = f'DROP  {option}  `{self.TABLE_PREFIX}{name}`'
+            command = f'DROP  {option}  `{self.get_real_table_name(name)}`'
         else:
             command = f'DROP  {option}  `{name}`'
         return self._write_db(command)
 
-    def _tables_name(self) -> list:
+    def tables_name(self) -> list:
         """"""
         return self.show_tables(name_only=True)
-
-    def _columns_name(self, table):
-        """"""
-        return [_c[0] for _c in self.show_columns(table)]
 
     def show_tables(self, name_only: bool = True):
         """
@@ -297,22 +294,26 @@ class SQLiteBase(BaseSQL):
         else:
             return [_ for _ in self.read_db('SELECT * FROM sqlite_master where type="table";', result_type=dict)]
 
+    def columns_name(self, table):
+        """"""
+        return self.show_columns(table_name=table, name_only=True)
+
     def show_columns(self, table_name, name_only=True) -> list:
         """显示列信息
 
         :return: {'cid': 0, 'name': 'id', 'type': 'int', 'notnull': 0, 'dflt_value': None, 'pk': 0}
                   字段编号     字段名        字段类型        不允许null      默认值
         """
-        table_name = self.TABLE_PREFIX + table_name
+        table_name = self.get_real_table_name(table_name)
         if name_only:
             return [_['name'] for _ in self.read_db(f'PRAGMA table_info({table_name});', result_type=dict)]
         else:
             return [_ for _ in self.read_db(f'PRAGMA table_info({table_name});', result_type=dict)]
 
     # 修改表结构
-    def _alter(self, table, command):
+    def _alter(self, table_name, command):
         """ 目前sqlite只支持RENAME，ADD COLUMN """
-        table = self.TABLE_PREFIX + table
+        table = self.get_real_table_name(table_name)
         _c = f'ALTER TABLE {table}  {command}'
         return self._write_db(_c)
 
@@ -326,16 +327,19 @@ class SQLiteAPI(SQLiteBase, BaseSQLAPI):
     def __enter__(self):
         return self
 
-    def insert(self, table_name, ignore_repeat=False, **kwargs):
-        """插入数据到数据库，支持插入多条数据。
+    def show_dbs(self, *args, **kwargs):
+        pass
 
-        :param table_name:
-        :param ignore_repeat:
-        :param kwargs: 需要插入的 字段名=值 （当值为list or tuple时，开启事物插入多条数据）
-                        当多个字段的list长度不一致时，抛出ZIPError。
-        :return:
-        """
-        return self._insert(table_name, ignore_repeat=ignore_repeat, **kwargs)
+    # def insert(self, table_name, ignore_repeat=False, **kwargs):
+    #     """插入数据到数据库，支持插入多条数据。
+    #
+    #     :param table_name:
+    #     :param ignore_repeat:
+    #     :param kwargs: 需要插入的 字段名=值 （当值为list or tuple时，开启事物插入多条数据）
+    #                     当多个字段的list长度不一致时，抛出ZIPError。
+    #     :return:
+    #     """
+    #     return self._insert(table_name, ignore_repeat=ignore_repeat, **kwargs)
 
     # 更好的解决方案：insert(ignore_repeat=True, ...)
     def insert_line2line(self, table_name, **kwargs):
@@ -352,47 +356,47 @@ class SQLiteAPI(SQLiteBase, BaseSQLAPI):
         else:
             raise SqlModuleError('插入单条数据请使用 insert()方法。')
 
-    def select(self, table, cols, *args, result_type=None, **kwargs):
-        """ SQLite 查询数据库
+    # def select(self, table, cols, *args, result_type=None, **kwargs):
+    #     """ SQLite 查询数据库
+    #
+    #     :param table:
+    #     :param cols:
+    #     :param result_type:
+    #     :param kwargs: {'WHERE', 'LIMIT', 'OFFSET', ORDER} 全大写
+    #     :return:
+    #     """
+    #     _cols = []
+    #     if isinstance(cols, str):
+    #         _cols.append(cols)
+    #     if isinstance(cols, (list, tuple)):
+    #         [_cols.append(_) for _ in cols]
+    #     if not args:
+    #         [_cols.append(_) for _ in args]
+    #     # print(_cols)
+    #     return self._select(table, _cols, result_type=result_type, **kwargs)
 
-        :param table:
-        :param cols:
-        :param result_type:
-        :param kwargs: {'WHERE', 'LIMIT', 'OFFSET', ORDER} 全大写
-        :return:
-        """
-        _cols = []
-        if isinstance(cols, str):
-            _cols.append(cols)
-        if isinstance(cols, (list, tuple)):
-            [_cols.append(_) for _ in cols]
-        if not args:
-            [_cols.append(_) for _ in args]
-        # print(_cols)
-        return self._select(table, _cols, result_type=result_type, **kwargs)
+    # def update(self, table, where_key, where_value, **kwargs):
+    #     """更新数据库数据 -
+    #
+    #     :param table:
+    #     :param where_key:
+    #     :param where_value:
+    #     :param kwargs:
+    #     :return:
+    #     """
+    #     return self._update(table, where_key, where_value, **kwargs)
 
-    def update(self, table, where_key, where_value, **kwargs):
-        """更新数据库数据 -
+    # def delete(self, table, **kwargs):
+    #     """删除数据表中的某一行数据，
+    #     :param table:
+    #     :param kwargs: 键名=键值；最好是数据库的主键或唯一的键。如果数据库没有，则最好组合where，以保证删除 - 唯一行。
+    #     :return
+    #     """
+    #     return self._delete(table, **kwargs)
 
-        :param table:
-        :param where_key:
-        :param where_value:
-        :param kwargs:
-        :return:
-        """
-        return self._update(table, where_key, where_value, **kwargs)
-
-    def delete(self, table, **kwargs):
-        """删除数据表中的某一行数据，
-        :param table:
-        :param kwargs: 键名=键值；最好是数据库的主键或唯一的键。如果数据库没有，则最好组合where，以保证删除 - 唯一行。
-        :return
-        """
-        return self._delete(table, **kwargs)
-
-    def drop_table(self, table_name):
-        """删除一个数据库"""
-        return self._drop('TABLE', table_name)
+    # def drop_table(self, table_name):
+    #     """删除一个数据库"""
+    #     return self._drop('TABLE', table_name)
 
     def drop_index(self, index_name):
         """删除一个索引"""
@@ -404,15 +408,42 @@ class SQLiteAPI(SQLiteBase, BaseSQLAPI):
         cmd = f'RENAME TO `{new_name}`'
         return self._alter(old_name, cmd)
 
-    def alter_all_column(self, table_name, columns_info):
+    def alter_add_column(self, table_name, columns_info):
         """怎加表的列"""
         cmd = f'ADD COLUMN {columns_info}'
         return self._alter(table_name, cmd)
 
+    def create_table_compatible(self, cmd: str):
+        # 移除COMMENT语句
+        cmd = re.sub(r'(COMMENT +".*?")', '', cmd, flags=re.IGNORECASE)
+        # MySQL自增 --> SQLite r'[(, ]* *(\w*).*?AUTO_INCREMENT.*?,'
+        for _r in re.findall(r'[(, ]* *(\w*).*?AUTO_INCREMENT.*?,', cmd, re.IGNORECASE):
+            cmd = re.sub(r'[(, ]* *\w*.*AUTO_INCREMENT.*?,', f'{_r} INTEGER PRIMARY KEY AUTOINCREMENT , ', cmd)
+
+        _integer = {'INT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'BIGINT', 'UNSIGNED BIG INT', 'INT2', 'INT8', }
+        _real = {'DOUBLE', 'FLOAT', 'DOUBLE PRECISION', 'TIMESTAMP'}
+        _text = {'CHARACTER', 'VARCHAR', 'VARYING CHARACTER', 'NCHAR', 'NATIVE CHARACTER', 'NVARCHAR', 'TEXT', 'CLOB',
+                 'CHAR',
+                 }
+        _blob = {'BLOB', 'TINYBLOB', 'MEDIUMBLOB', 'LONGBLOB'}
+
+        cmd = re.sub(' ' + f'({" | ".join(_integer)})' + ' ', ' integer ', cmd, flags=re.IGNORECASE)
+        cmd = re.sub(' ' + f'({" | ".join(_real)})' + ' ', ' REAL ', cmd, flags=re.IGNORECASE)
+        cmd = re.sub(' ' + f'({" | ".join(_text)})' + ' ', ' TEXT ', cmd, flags=re.IGNORECASE)
+        cmd = re.sub(' ' + f'({" | ".join(_blob)})' + ' ', ' BLOB ', cmd, flags=re.IGNORECASE)
+        return cmd
+
 
 if __name__ == '__main__':
     logger.addHandler(console_handler)  #
-
+    table_structure = (  # f' CREATE TABLE `{table_name}` ( '
+        f'_ID INT AUTO_INCREMENT PRIMARY KEY , '
+        f'TEST_STR VARCHAR(100) NOT NULL COMMENT "随机字符串", '
+        f'TEST_DATETIME DATETIME NOT NULL COMMENT "当前时间", '
+        f'TEST_INT INT NOT NULL COMMENT "整数时间戳", '
+        f'TEST_FLOAT DOUBLE NOT NULL COMMENT "时间戳" , '
+        f'TEST_JSON JSON NOT NULL COMMENT "测试JSON格式写入" , '
+        f'TEST_BLOB MEDIUMBLOB COMMENT "测试二进制数据的写入"'
+    )
     a = SQLiteAPI('')
-
-    print(a)
+    a.create_table_compatible(table_structure)

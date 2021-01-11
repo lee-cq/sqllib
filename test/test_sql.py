@@ -25,15 +25,15 @@ from sqllib.SQLite.sqlite import SQLiteAPI
 from sqllib.common.base_sql import BaseSQL
 from sqllib.common.error import *
 
-__DEBUG__ = False
-__SQLite__ = ':memory:' if not __DEBUG__ else 'sup/UT_SQLite.sqlite'
+__DEBUG__ = True
+__SQLite__ = 'sup/UT_SQLite.sqlite'  # ':memory:' if not False else
 # __MySQL__ = ('t.sql.leecq.cn', 10080, 'test', 'test123456', 'test')
 __MySQL__ = ('localhost', 3306, 'test', 'test123456', 'test')
 
 table_name = 'PYTHON_UNITTEST'
 table_prefix = 'UT_'
 table_structure = (  # f' CREATE TABLE `{table_name}` ( '
-    f'_ID INT auto_increment PRIMARY KEY , '
+    f'_ID INT AUTO_INCREMENT PRIMARY KEY , '
     f'TEST_STR VARCHAR(100) NOT NULL COMMENT "随机字符串", '
     f'TEST_DATETIME DATETIME NOT NULL COMMENT "当前时间", '
     f'TEST_INT INT NOT NULL COMMENT "整数时间戳", '
@@ -80,7 +80,6 @@ class TESTMySql(unittest.TestCase):
         self.assertIsInstance(self.sql, BaseSQL, "数据库连接失败")
 
     def test_01_set_pr(self):
-        # self.sql.set_prefix('UT')
         self.assertEqual(table_prefix, self.sql.TABLE_PREFIX, "设置表前缀未生效！")
 
     def test_02_pool_connect(self):
@@ -94,10 +93,12 @@ class TESTMySql(unittest.TestCase):
         except:
             pass
         _cmd = f'CREATE TABLE `{table_name}` ' + ' ( ' + table_structure + ' ) '
+        print(_cmd)
         self.sql.create_table(_cmd, table_name)
 
     def test_12_create_table_with_name(self):
         self.sql.create_table(cmd=table_structure, table_name=table_name, exists_ok=True)
+        self.sql.show_tables()
 
     def test_13_create_table_existed(self):
         self.sql.create_table(cmd=table_structure, table_name=table_name, exists_ok=True)
@@ -123,7 +124,7 @@ class TESTMySql(unittest.TestCase):
 
     def test_22_insert_more(self):
         """插入多条数据"""
-        _a = self.sql.insert(table_name, ignore=False, **_dict_for_data(is_more=True))
+        _a = self.sql.insert(table_name, ignore_repeat=False, **_dict_for_data(is_more=True))
         self.assertTrue(_a > 0, f'插入的行数为 {_a}')
 
     def test_23_insert_zip_error(self):
@@ -171,11 +172,22 @@ class TESTMySql(unittest.TestCase):
         _ = [i[0] for i in self.sql.select(table_name, '_ID', ORDER=f'{table_keys[0]} DESC')]
         self.assertEqual([4, 3, 1, 2], _, )
 
+    def test_36_show_tables(self):
+        """返回表名字"""
+        _ = [i.upper() for i in self.sql.tables_name()]
+        print(_)
+        self.assertIn(self.sql.get_real_table_name(table_name).upper(), _, '返回的数据表名称不正确')
+
+    def test_37_show_columns(self):
+        _ = self.sql.columns_name(table_name)
+        print(_)
+        self.assertTrue(set(table_keys).issubset(_), '返回的表字段异常')
+
     def test_41_update(self):
         """修改数据（更新数据）"""
         self.sql.update(table_name, '_ID', '1', TEST_STR='NEW1')
         _ = self.sql.select(table_name, 'TEST_STR', WHERE='_ID=1')[0][0]
-        self.assertEqual('NEW1', _.decode(), "数据更改失败")
+        self.assertEqual('NEW1', _.decode() if isinstance(_, bytes) else _, "数据更改失败")
 
     def test_51_delete_row(self):
         """删除匹配的行"""
@@ -199,18 +211,19 @@ class TESTMySql(unittest.TestCase):
         self.assertEqual(_, 0, '删除数据表失败')
 
 
-# class TESTSQLite(TESTMySql, unittest.TestCase):
-#
-#     def setUp(self) -> None:
-#         self.sql = SQLiteAPI(__SQLite__)
+class TESTSQLite(TESTMySql, unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.sql = SQLiteAPI(__SQLite__)
+        self.sql.set_prefix(table_prefix)
 
 
 if __name__ == '__main__':
     unittest.main()
-    mysql = TESTMySql()
-    # sqlite = TESTSQLite()
-    test = unittest.TestSuite()
-    test.addTest(mysql)
-
-    runner = unittest.TestRunner()
-    runner.run(test)
+    # mysql = TESTMySql()
+    # # sqlite = TESTSQLite()
+    # test = unittest.TestSuite()
+    # test.addTest(mysql)
+    #
+    # runner = unittest.TestRunner()
+    # runner.run(test)

@@ -250,15 +250,17 @@ class MyBaseSQL(BaseSQL):
          | dict  | Field | Type | Null | Key | Default | Extra |
          +-------+-------+------+------+-----+---------+-------+
         """
+        table = self.get_real_table_name(table)
         return self._read_db(f'show columns from `{table}`', result_type=result_type)
 
     # 查表中的键
-    def _columns_name(self, table) -> list:
+    def columns_name(self, table) -> list:
         """返回 table 中的 列名在一个列表中"""
-        return [_c[0] for _c in self._columns(table)]
+        table = self.get_real_table_name(table)
+        return [_c[0].decode() if isinstance(_c[0], bytes) else _c[0] for _c in self._columns(table)]
 
     # 获取数据库的表名
-    def _tables_name(self) -> list:
+    def tables_name(self) -> list:
         """由于链接时已经指定数据库，无需再次指定。返回数据库中所有表的名字。"""
         return [_c[0].decode() if isinstance(_c[0], bytes) else _c[0] for _c in self._read_db("show tables")]
 
@@ -269,7 +271,7 @@ class MyBaseSQL(BaseSQL):
             command = command.strip()[:-1] + ' '
 
         _c = (f"CREATE TABLE {'IF NOT EXISTS' if exists_ok else ' '} "
-              f"`{self.TABLE_PREFIX}{table_name}` ( "
+              f"`{self.get_real_table_name(table_name)}` ( "
               + command +
               ") " + table_args)
         logger.debug(_c)
@@ -277,7 +279,7 @@ class MyBaseSQL(BaseSQL):
         return self._write_db(_c, args)
 
     # 插入表
-    def _insert(self, table, ignore=None, **kwargs):
+    def _insert(self, table, ignore_repeat=False, **kwargs):
         """ 向数据库插入内容。
 
         :param table: 表名；
@@ -285,21 +287,21 @@ class MyBaseSQL(BaseSQL):
         :param kwargs: 字段名 = 值；
         :return:
         """
-        ignore_ = 'IGNORE' if ignore else ''
-        _c = (f"INSERT {ignore_} INTO `{self.TABLE_PREFIX}{table}`  "
+        ignore_ = 'IGNORE' if ignore_repeat else ''
+        _c = (f"INSERT {ignore_} INTO `{self.get_real_table_name(table)}`  "
               "( " +
               ', '.join([" `" + _k + "` " for _k in kwargs.keys()]) +
               " ) "  # 这一行放在后面会发生，乱版；
               " VALUES "
               " ( " + ', '.join([" %s " for _k in kwargs.values()]) + " ) ; "  # 添加值
               )
-        # print(self._insert._name_, _c)
+        # print( _c)
         if not isinstance(list(kwargs.values())[0], (str, int, type(None), float)):
             arg = self.zip_data_for_insert(tuple(kwargs.values()))
             return self._write_affair(_c, arg)
         else:
             for x in kwargs.values():
-                if isinstance(x, (list, tuple, set)):
+                if isinstance(x, (list, tuple)):
                     raise InsertZipError("INSERT一条数据时，出现列表列或元组！确保数据统一")
             return self._write_db(_c, list(kwargs.values()))  # 提交
 
@@ -317,7 +319,7 @@ class MyBaseSQL(BaseSQL):
                 raise ValueError(f'既没有k, 也不是dict')
             k = args[0].keys()
         _ignore = 'OR IGNORE' if ignore_repeat else ''
-        _c = f"INSERT {_ignore} INTO {self.TABLE_PREFIX}{table_name} ( "
+        _c = f"INSERT {_ignore} INTO {self.get_real_table_name(table_name)} ( "
         _c += ", ".join([_ for _ in k]) + " ) "
         _c += "VALUES ( "
         _c += ", ".join([f" %s " for _ in args[0].values()]) + ");"
@@ -338,7 +340,7 @@ class MyBaseSQL(BaseSQL):
 
         command = f"SELECT  "
         command += ' , '.join(columns_name) + " "
-        command += f'FROM `{self.TABLE_PREFIX}{table}` '
+        command += f'FROM `{self.get_real_table_name(table)}` '
         for key, value in kwargs.items():
             key = key.upper()
             if key in ['WHERE', 'LIMIT', 'OFFSET']:
@@ -358,9 +360,9 @@ class MyBaseSQL(BaseSQL):
         :param kwargs: 更新的键 = 更新的值， 注意大小写，数字键要加 - ``
         :return: 0 成功。
         """
-        self.key_and_table_is_exists(f'{self.TABLE_PREFIX}{table}', where_key, **kwargs)  # 判断 表 & 键 的存在性！
+        self.key_and_table_is_exists(f'{self.get_real_table_name(table)}', where_key, **kwargs)  # 判断 表 & 键 的存在性！
         _update_data = ' , '.join([f" `{k}`=%({k})s  " for k, v in kwargs.items()])  # 构造更新内容
-        command = (f"UPDATE `{self.TABLE_PREFIX}{table}` SET  "
+        command = (f"UPDATE `{self.get_real_table_name(table)}` SET  "
                    f"{_update_data}"
                    f" WHERE {where_key}='{where_value}' ;"  # 构造WHERE语句
                    )
@@ -375,7 +377,7 @@ class MyBaseSQL(BaseSQL):
         :return: 0 成功
         """
         if option.upper() == 'TABLE':
-            command = f'DROP  {option}  `{"" if name.upper().startswith(self.TABLE_PREFIX) else self.TABLE_PREFIX}{name}`'
+            command = f'DROP  {option}  `{self.get_real_table_name(name)}`'
         else:
             command = f'DROP  {option}  `{name}`'
         return self._write_db(command)
@@ -387,9 +389,9 @@ class MyBaseSQL(BaseSQL):
         :param where_value:
         :param kwargs: 键名=键值；where——key的补充。
         """
-        self.key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)
+        self.key_and_table_is_exists(self.get_real_table_name(table), where_key, **kwargs)
 
-        command = f"DELETE FROM `{self.TABLE_PREFIX}{table}` WHERE {where_key}='{where_value}'  "
+        command = f"DELETE FROM `{self.get_real_table_name(table)}` WHERE {where_key}='{where_value}'  "
         for k, v in kwargs.items():
             command += f"{k}='{v}'"
 
@@ -399,7 +401,7 @@ class MyBaseSQL(BaseSQL):
         """向已有表中插入键
 
         语法：
-            ALTER TABLE `{self.TABLE_PREFIX}{table_name}` ADD COLUMN
+            ALTER TABLE `{self.get_real_table_name(table)}` ADD COLUMN
                 (`device_ip` VARCHAR(32) DEFAULT NULL COMMENT '设备IP',
                  `device_name` VARCHAR(128) DEFAULT NULL COMMENT '设备名称',
                  );
@@ -407,7 +409,7 @@ class MyBaseSQL(BaseSQL):
         """
         if command.strip().endswith(','):
             command = command.strip()[:-1] + ' '
-        _c = (f"ALTER TABLE `{self.TABLE_PREFIX}{table}` ADD COLUMN ( "
+        _c = (f"ALTER TABLE `{self.get_real_table_name(table)}` ADD COLUMN ( "
               + command +
               ");")
         return self._write_db(_c)
@@ -426,7 +428,7 @@ class MyBaseSQL(BaseSQL):
 
     def show_tables(self):
         """列出当前数据库的数据表"""
-        return self._tables_name()
+        return self.tables_name()
 
     def show_columns(self, table_name, result_type=None):
         """列出指定表的字段名
@@ -435,9 +437,9 @@ class MyBaseSQL(BaseSQL):
         :param result_type: None | [list|tuple] | dict
         :return:
         """
-        table_name = self.TABLE_PREFIX + table_name
+        table_name = self.get_real_table_name(table_name)
         if result_type is None:
-            return self._columns_name(table_name)
+            return self.columns_name(table_name)
         elif result_type in [list, tuple]:
             return self._columns(table_name, result_type=list)
         else:
@@ -544,6 +546,12 @@ class MySqlAPI(MyBaseSQL, BaseSQLAPI):
         super().__init__(host, port, user, passwd, db, charset, **kwargs)
         if not warning:
             filterwarnings("ignore", category=pymysql.Warning)
+
+    def create_table_compatible(self, cmd):
+        return cmd
+
+    def show_dbs(self):
+        pass
 
 
 class MyMySqlAPI(MySqlAPI):

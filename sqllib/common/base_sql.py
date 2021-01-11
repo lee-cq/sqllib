@@ -5,29 +5,32 @@
 @Author     : LeeCQ
 @Date-Time  : 2021/1/8 20:46
 """
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from warnings import warn
 
-from .base import DBBase
+from .base import DBBase, APIBase
 from .error import *
 
 __all__ = ['BaseSQL', 'BaseSQLAPI']
 
 from .common import sql_join
+
+
 # from sqllib.SQLite.sqlite import SQLiteBase
 
 
 class BaseSQL(DBBase, ABC):
     """关系型数据库的基类"""
 
-    SQL_DB = None  # 数据库
+    SQL_DB = None
+    # 数据库
 
     @abstractmethod
-    def _tables_name(self):
+    def tables_name(self):
         pass
 
     @abstractmethod
-    def _columns_name(self, table):
+    def columns_name(self, table):
         pass
 
     @staticmethod  # 插入或更新多条数据时，数据格式转换
@@ -53,17 +56,18 @@ class BaseSQL(DBBase, ABC):
         :param kwargs: 键名=键值；
         :return: 0 存在
         """
-        tables_name = [i.upper() for i in self._tables_name()]
+        tables_name = [i.upper() for i in self.tables_name()]
         if table.upper() not in tables_name:
             raise SqlTableNameError(f"{table} NOT in This Database: {self.SQL_DB};\n"
-                                    f"(ALL Tables {self._tables_name()}")
+                                    f"(ALL Tables {self.tables_name()}")
 
-        cols = [i.decode() if isinstance(i, bytes) else i for i in self._columns_name(table)]
+        cols = [i.decode() if isinstance(i, bytes) else i for i in self.columns_name(table)]
         not_in_table_keys = [k.upper() for k, v in kwargs.items() if k not in cols]
         not_in_table_keys += [k.upper() for k in args if k not in cols]
         if key.upper() not in cols and not_in_table_keys:
             raise SqlKeyNameError(f'The key {key.upper()} NOT in this Table: {table};\n'
-                                  f'(ALL Columns {cols})'
+                                  f'(ALL Columns {cols}) \n'
+                                  f'self.columns_name(table) = {self.columns_name(table)}'
                                   )
         return 0
 
@@ -72,7 +76,7 @@ class BaseSQL(DBBase, ABC):
         pass
 
     @abstractmethod
-    def _insert(self, table, ignore, **kwargs):
+    def _insert(self, table, ignore_repeat=False, **kwargs):
         pass
 
     @abstractmethod
@@ -96,13 +100,18 @@ class BaseSQL(DBBase, ABC):
         pass
 
 
-class BaseSQLAPI(BaseSQL, ABC):
+class BaseSQLAPI(BaseSQL, APIBase, metaclass=ABCMeta):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
     def __enter__(self):
         return self
+
+    @abstractmethod
+    def create_table_compatible(self, cmd):
+        """对CREATE语句中兼容的语法进行重置或删除"""
+        return cmd
 
     def create_table(self, cmd: (str, tuple), table_name, exists_ok=False, table_args='', *args):
         """ 创建一个数据表：
@@ -124,20 +133,22 @@ class BaseSQLAPI(BaseSQL, ABC):
         """
         if isinstance(cmd, (tuple, list)):
             cmd = sql_join(cmd)[0]
+        cmd = self.create_table_compatible(cmd)
+        table_name = self.get_real_table_name(table_name)
         return self._create_table(cmd, table_name, exists_ok=exists_ok, table_args=table_args, *args)
 
-    def insert(self, table, ignore=None, **kwargs):
+    def insert(self, table, ignore_repeat=False, **kwargs):
         """ 向数据库插入内容。
 
         允许一次插入多条数据，以 key=(tuple)的形式；
             但是要注意，所有字段的元组长度需要相等；否组报错。
 
         :param table: 表名；
-        :param ignore: 忽视重复
+        :param ignore_repeat: 忽视重复
         :param kwargs: 字段名 = 值；字段名一定要存在与表中， 否则报错；
         :return: 0 成功 否则 报错
         """
-        return self._insert(table, ignore=ignore, **kwargs)
+        return self._insert(table, ignore_repeat=ignore_repeat, **kwargs)
 
     def select(self, table, cols, *args, result_type=None, **kwargs):
         """ 从数据库中查找数据；
@@ -217,7 +228,7 @@ class BaseSQLAPI(BaseSQL, ABC):
         :param kwargs: 补充查找的键值对；
         :return: 0 or Error
         """
-        return self._delete(table, where_key, where_value, **kwargs)
+        return self._delete(table, where_key=where_key, where_value=where_value, **kwargs)
 
     def alter_table(self, table, command: str):
         """向已有表中插入键

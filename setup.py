@@ -11,7 +11,7 @@ import os
 from setuptools import setup, find_packages
 
 PACKAGE = "sqllib"
-DESCRIPTION = "对MySQL, SQLite等数据库进行接口集成."
+DESCRIPTION = "对MySQL, SQLite数据库进行接口集成."
 AUTHOR = "Lee CQ"
 AUTHOR_EMAIL = "lee-cq@qq.com"
 URL = "https://leecq.cn"
@@ -43,7 +43,7 @@ setup_args = {
     # 'package_data': {'aliyunsdkcore': ['data/*.json', '*.pem', "vendored/*.pem"],
     #                  'aliyunsdkcore.vendored.requests.packages.certifi': ['cacert.pem']},
     'platforms': 'any',
-    'install_requires': requires,
+    # 'install_requires': requires,
     'classifiers': [
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -51,6 +51,8 @@ setup_args = {
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development',
     ]
 }
