@@ -23,6 +23,7 @@ class BaseSQL(DBBase, ABC):
     """关系型数据库的基类"""
 
     SQL_DB = None
+
     # 数据库
 
     @abstractmethod
@@ -98,6 +99,18 @@ class BaseSQL(DBBase, ABC):
     @abstractmethod
     def _alter(self, table, command: str):
         pass
+
+    def write_db(self, command, *args):
+        """write_db的外部访问"""
+        return self._write_db(command, *args)
+
+    def write_rows(self, command, *args):
+        """write_rows的外部访问"""
+        return self._write_affair(command, *args)
+
+    def read_db(self, command, args=None, result_type=None):
+        """读取数据库的外部访问"""
+        return self._read_db(command, args, result_type)
 
 
 class BaseSQLAPI(BaseSQL, APIBase, metaclass=ABCMeta):

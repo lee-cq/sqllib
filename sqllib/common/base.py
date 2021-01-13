@@ -13,7 +13,7 @@ __all__ = ['APIBase', 'DBBase']
 class DBBase(ABC):
     """基类"""
 
-    # TABLE_PREFIX = ''
+    TABLE_PREFIX = ''
     _sql = '__sql_connect()'
 
     @staticmethod
@@ -28,6 +28,7 @@ class DBBase(ABC):
     def _write_affair(self, command, args):
         """事务"""
 
+    @abstractmethod
     def _read_db(self, command, args=None, result_type=None):
         """读数据库"""
 

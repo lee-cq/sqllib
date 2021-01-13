@@ -69,8 +69,8 @@ def _zip_to_list(_zip):
 class TESTMySql(unittest.TestCase):
 
     def setUp(self) -> None:
-        # self.sql = MySqlAPI(*__MySQL__, warning=False, charset='utf8')
-        self.sql = SQLiteAPI(__SQLite__)
+        self.sql = MySqlAPI(*__MySQL__, warning=False, charset='utf8')
+        # self.sql = SQLiteAPI(__SQLite__)
         self.sql.set_prefix(table_prefix)
 
     def tearDown(self) -> None:

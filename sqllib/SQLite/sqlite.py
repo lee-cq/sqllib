@@ -109,7 +109,7 @@ class SQLiteBase(BaseSQL):
         finally:
             cur.close()
 
-    def __read_db(self, command, result_type=None):
+    def _read_db(self, command, args=None, result_type=None):
         """数据库读取的具体实现。主要涉及数据库查询"""
         __sql = self._sql
         if result_type is dict:
@@ -121,15 +121,6 @@ class SQLiteBase(BaseSQL):
         results = cur.fetchall()
         cur.close()
         return results
-
-    def read_db(self, cmd, result_type=None):
-        """是菊科操作的对外接口。"""
-        return self.__read_db(cmd, result_type=result_type)
-
-    def write_db(self, cmd, args=None):
-        """数据库操作的对外接口。"""
-        # logger.warning("使用此函数时注意表前缀! ")
-        return self._write_db(cmd, args)
 
     def write_no_except(self, cmd, args=None):
         """数据库写入对外接口，它没有收集任何错误! """
@@ -231,7 +222,7 @@ class SQLiteBase(BaseSQL):
         command += ' '.join([f'ORDER BY {value}' for key, value in kwargs.items()
                              if key.upper() == 'ORDER']) + ' '
         # print(command)
-        return self.__read_db(command, result_type=result_type)
+        return self._read_db(command, result_type=result_type)
 
     # 更新表
     def _update(self, table, where_key, where_value, **kwargs):
