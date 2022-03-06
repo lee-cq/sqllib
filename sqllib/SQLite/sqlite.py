@@ -45,8 +45,8 @@ class SQLiteBase(BaseSQL):
     """
 
     def __init__(self, db, **kwargs):
+        self.TABLE_PREFIX = kwargs.pop('prefix', '')
         self._sql = sqlite3.connect(db, **kwargs)
-        self.TABLE_PREFIX = '' if 'prefix' not in kwargs.keys() else kwargs['prefix']
 
     def close(self):
         self._sql.close()

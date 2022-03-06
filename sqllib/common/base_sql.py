@@ -73,7 +73,7 @@ class BaseSQL(DBBase, ABC):
         return 0
 
     @abstractmethod
-    def _create_table(self, cmd, table_name, exists_ok, table_args, *args):
+    def _create_table(self, table_name, cmd, exists_ok, table_args, *args):
         pass
 
     @abstractmethod
@@ -126,7 +126,7 @@ class BaseSQLAPI(BaseSQL, APIBase, metaclass=ABCMeta):
         """对CREATE语句中兼容的语法进行重置或删除"""
         return cmd
 
-    def create_table(self, cmd: (str, tuple), table_name, exists_ok=False, table_args='', *args):
+    def create_table(self, table_name, cmd: (str, tuple), exists_ok=False, table_args='', *args):
         """ 创建一个数据表：
 
         模板：

@@ -26,9 +26,9 @@ from sqllib.common.base_sql import BaseSQL
 from sqllib.common.error import *
 
 __DEBUG__ = True
-__SQLite__ = 'sup/UT_SQLite.sqlite'  # ':memory:' if not False else
+__SQLite__ = ":memory:" if not __DEBUG__ else 'sup/UT.sqlite'  # ':memory:' if not False else
 # __MySQL__ = ('t.sql.leecq.cn', 10080, 'test', 'test123456', 'test')
-__MySQL__ = ('localhost', 3306, 'test', 'test123456', 'test')
+# __MySQL__ = ('localhost', 3306, 'test', 'test123456', 'test')
 
 table_name = 'PYTHON_UNITTEST'
 table_prefix = 'UT_'
@@ -44,8 +44,8 @@ table_structure = (  # f' CREATE TABLE `{table_name}` ( '
 table_keys = ['TEST_STR', 'TEST_DATETIME', 'TEST_INT', 'TEST_FLOAT', 'TEST_JSON', 'TEST_BLOB']
 table_data_one = (r'!@#$%^&*()_+-=/{}[]\' ";,.<>/`·This is a character test string。7894561320',
                   '2021-1-9 17:28:16', int(time()), time(),
-                  Path('sup/json_data.json').read_text(encoding='utf8'),
-                  Path('sup/photo.jpg').read_bytes()
+                  json.dumps({'a': 1, 'b': 2}),
+                  b'\x99'
                   )
 table_data_more = (table_data_one,
                    ('A', '2021-1-9 18:21:55', int(time()), time(), json.dumps({"A": 1}), b'This is BLOB for MEDIUM 1 '),
@@ -68,13 +68,21 @@ def _zip_to_list(_zip):
 
 class TESTMySql(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        # sql = MySqlAPI('a.sql.leecq.cn', 3306, 'test_sqllib', 'Test_sqllib', 'test_sqllib', warning=False, charset='utf8')
+        # sql = MySqlAPI('localhost', 3306, 'test', 'test123456', 'test', warning=False, charset='utf8')
+        sql = SQLiteAPI(__SQLite__, prefix=table_prefix)
+        cls.sql = sql
+        cls.db_name = 'main' if isinstance(sql, SQLiteAPI) else 'test_sqllib'
+
     def setUp(self) -> None:
-        self.sql = MySqlAPI(*__MySQL__, warning=False, charset='utf8')
+        # self.sql = MySqlAPI(*__MySQL__, warning=False, charset='utf8')
         # self.sql = SQLiteAPI(__SQLite__)
         self.sql.set_prefix(table_prefix)
 
-    def tearDown(self) -> None:
-        self.sql.close()
+    # def tearDown(self) -> None:
+    #     self.sql.close()
 
     def test_00_connect(self):
         self.assertIsInstance(self.sql, BaseSQL, "数据库连接失败")
@@ -114,7 +122,7 @@ class TESTMySql(unittest.TestCase):
                 ('TEST_JSON', ' JSON', ' NOT NULL COMMENT "测试JSON格式写入"  '),
                 ('TEST_BLOB', ' MEDIUMBLOB', ' COMMENT "测试二进制数据的写入"'),
                 )
-        self.sql.create_table(_cmd, 'test_join_sql')
+        self.sql.create_table('test_join_sql', _cmd, )
         self.sql.drop_table('test_join_sql')
 
     def test_21_insert_one(self):
@@ -204,18 +212,37 @@ class TESTMySql(unittest.TestCase):
     def test_63_alter_drop_col(self):
         """修改表结构-删除列"""
 
-    @unittest.skipIf(__DEBUG__, "DEBUG-ING ...")
+    def test_80(self):
+        """测试表前缀"""
+        tn = 'prefix_test'
+        ptn = table_prefix + tn
+        self.sql.create_table(tn, 'a varchar(10)', exists_ok=True)
+        self.sql.insert(ptn, a='sss')
+        self.sql.insert(tn, a='tn')
+        assert self.sql.select(ptn, 'a') == self.sql.select(tn, 'a')
+        self.sql.update(ptn, 'a', 'sss', a='aaa')
+        self.sql.delete(ptn, 'a', 'aaa')
+        self.sql.drop_table(ptn)
+
+    # @unittest.skipIf(__DEBUG__, "DEBUG-ING ...")
     def test_91_drop_table(self):
         """删除数据表测试"""
         _ = self.sql.drop_table(table_name)
         self.assertEqual(_, 0, '删除数据表失败')
 
+    @unittest.skipIf(__DEBUG__, "DEBUG-ING ...")
+    def test_91_drop_db(self):
+        _ = self.sql.drop_db(self.db_name)
 
-class TESTSQLite(TESTMySql, unittest.TestCase):
+
+class TESTSQLite(TESTMySql):
 
     def setUp(self) -> None:
-        self.sql = SQLiteAPI(__SQLite__)
         self.sql.set_prefix(table_prefix)
+
+    @unittest.skipIf(__DEBUG__, "DEBUG-ING ...")
+    def test_91_drop_db(self):
+        _ = self.sql.drop_db(self.db_name)
 
 
 if __name__ == '__main__':

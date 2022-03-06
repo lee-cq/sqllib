@@ -116,7 +116,7 @@ class MyBaseSQL(BaseSQL):
         self.SQL_CHARSET = charset  # 编码
         self.use_unicode = use_unicode
         # 表前缀
-        self.TABLE_PREFIX = '' if 'prefix' not in kwargs.keys() else kwargs['prefix']
+        self.TABLE_PREFIX = kwargs.pop('prefix', '')
         self._sql = pymysql.connect(host=self.SQL_HOST,
                                     port=self.SQL_PORT,
                                     user=self.SQL_USER,

@@ -40,9 +40,9 @@ class DBBase(ABC):
         """设置表前缀"""
         self.TABLE_PREFIX = prefix
 
-    def parse_prefix(self, name):
+    def parse_prefix(self, name: str) -> str:
         """返回一个正确的真实的表名称"""
-        return name if name.startswith(self.TABLE_PREFIX) else self.TABLE_PREFIX + name
+        return name if name.startswith(self.TABLE_PREFIX) else f'{self.TABLE_PREFIX}{name}'
 
     def get_real_table_name(self, name):
         return self.parse_prefix(name)
