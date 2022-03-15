@@ -9,6 +9,6 @@ python setup.py sdist bdist_wheel
 :: 上传包 -- 依赖 : python -m pip install --upgrade twine
 :: 用户名密码在 home\.pypirc 没有手动
 
-python -m twine upload dist/*
+python -m twine upload dist/sqllib-*
 
 pause

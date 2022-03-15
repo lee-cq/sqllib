@@ -67,6 +67,7 @@ class SQLiteBase(BaseSQL):
     def _write_db(self, command, args=None):
         __sql = self._sql
         cur = __sql.cursor()  # 使用cursor()方法获取操作游标
+        logger.debug(f'SQL: {command}')
         try:
             if not args:
                 cur.execute(command)
@@ -85,6 +86,7 @@ class SQLiteBase(BaseSQL):
         """未收集错误的"""
         __sql = self._sql
         cur = __sql.cursor()  # 使用cursor()方法获取操作游标
+        logger.debug(f'SQL: {command}')
         if not args:
             cur.execute(command)
         else:
@@ -97,6 +99,7 @@ class SQLiteBase(BaseSQL):
         """数据库事务写入。"""
         __sql = self._sql
         cur = __sql.cursor()
+        logger.debug(f'SQL: {command}')
         try:
             cur.executemany(command, args)
             __sql.commit()
@@ -111,6 +114,7 @@ class SQLiteBase(BaseSQL):
 
     def _read_db(self, command, args=None, result_type=None):
         """数据库读取的具体实现。主要涉及数据库查询"""
+        logger.debug(f'SQL: {command}')
         __sql = self._sql
         if result_type is dict:
             __sql.row_factory = dict_factory
@@ -146,7 +150,6 @@ class SQLiteBase(BaseSQL):
 
         _c = f"CREATE TABLE {_ignore} {self.get_real_table_name(table_name)} ( "
         _c += keys + ");"
-        logger.debug(_c)
         return self._write_db(_c)
 
     # 插入表数据
@@ -207,16 +210,6 @@ class SQLiteBase(BaseSQL):
         :return 结果集
         """
         command = f'SELECT  ' + ' , '.join(cols) + ' ' + f'FROM `{self.get_real_table_name(table)}` '
-        # ===========================================
-        # 下面是更好的解决方案
-        # ===========================================
-        # for key, value in kwargs.items():
-        #     key = key.upper()
-        #     if key in ['WHERE', 'LIMIT', 'OFFSET']:
-        #         command += f' {key}  {value}'
-        #     if key == 'ORDER':
-        #         command += f' {key} BY {value}'
-        # ===========================================
         command += ' '.join([' '.join((key.upper(), str(value))) for key, value in kwargs.items()
                              if key.upper() in ['WHERE', 'LIMIT', 'OFFSET']]) + '  '
         command += ' '.join([f'ORDER BY {value}' for key, value in kwargs.items()
@@ -235,7 +228,7 @@ class SQLiteBase(BaseSQL):
         :return: 0 成功。
         """
 
-        self.key_and_table_is_exists(self.TABLE_PREFIX + table, where_key, **kwargs)  # 判断 表 & 键 的存在性！
+        self.key_and_table_is_exists(self.get_real_table_name(table), where_key, **kwargs)  # 判断 表 & 键 的存在性！
         command = f"UPDATE `{self.get_real_table_name(table)}` SET  " + \
                   ' , '.join([f" {k}=? " for k, v in kwargs.items()]) + \
                   f" WHERE `{where_key}`='{where_value}' ;"  # 构造WHERE语句

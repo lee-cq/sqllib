@@ -38,7 +38,7 @@ from .common.base_sql import BaseSQL, BaseSQLAPI
 from .common import common
 
 # 直接访问会出错，但是，其他模块可以正常导入这些API
-__version__ = '0.2.6.3'
+__version__ = '0.2.6.4'
 
 # __all__ = ['common', 'BaseSQL',
 #            'SQLiteAPI', 'MyMySqlAPI', 'MySqlAPI', 'sql_join']

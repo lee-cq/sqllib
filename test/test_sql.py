@@ -228,7 +228,7 @@ class TESTMySql(unittest.TestCase):
     def test_91_drop_table(self):
         """删除数据表测试"""
         _ = self.sql.drop_table(table_name)
-        self.assertEqual(_, 0, '删除数据表失败')
+        self.assertEqual(_, -1, '删除数据表失败')
 
     @unittest.skipIf(__DEBUG__, "DEBUG-ING ...")
     def test_91_drop_db(self):
