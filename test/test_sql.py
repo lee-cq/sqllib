@@ -18,15 +18,17 @@
 import unittest
 import json
 from time import time
-# from datetime import n
 from pathlib import Path
+
 from sqllib.mysql.mysqlbase import MySqlAPI
 from sqllib.SQLite.sqlite import SQLiteAPI
 from sqllib.common.base_sql import BaseSQL
 from sqllib.common.error import *
 
+WORKDIR = Path(__file__).parent
 __DEBUG__ = True
-__SQLite__ = ":memory:" if not __DEBUG__ else 'sup/UT.sqlite'  # ':memory:' if not False else
+# ':memory:' if not False else
+__SQLite__ = ":memory:" if not __DEBUG__ else WORKDIR / 'sup/UT.sqlite'  
 # __MySQL__ = ('t.sql.leecq.cn', 10080, 'test', 'test123456', 'test')
 # __MySQL__ = ('localhost', 3306, 'test', 'test123456', 'test')
 
