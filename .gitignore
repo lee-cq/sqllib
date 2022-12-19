@@ -6,6 +6,7 @@ __pycache__/
 venv/
 dist/
 sqllib.egg-info/
+test/sup/UT.sqlite
 
 
 # C extensions
